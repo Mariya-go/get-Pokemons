@@ -5,7 +5,7 @@ const createErrorMessage = () => {
 
     const message = document.createElement('h2');
     message.innerText =
-        'The number is incorrect. Please enter number from 1 to 1010';
+        'The numbers are incorrect. Please enter numbers from 1 to 1010 separated by ","';
 
     container.append(message);
     return container;

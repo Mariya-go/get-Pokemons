@@ -2,52 +2,51 @@ import dom from '../dom.js';
 import createPokemon from '../components/createPokemon.js';
 import getPokemon from '../../apis/getPokemon.js';
 import createAbilities from '../components/createAbilities.js';
-import data from '../data.js';
+
 import createErrorMessage from '../components/createErrorMessage.js';
 
 const buttonHandler = async () => {
-    // get pokemon id
-    const pokemonId = Number(dom.input.value);
+    // clean page
+    dom.root.innerHTML = '';
 
-    // check if pokemon DOM exist
-    const isContainerExist = document.getElementById('container');
+    // get pokemon input value
+    let inputValue = dom.input.value;
 
-    // processing incorrect numbers
-    if (pokemonId === '' || pokemonId < 1 || pokemonId > 1010) {
+    // processing incorrect value
+    if (!inputValue) {
         const errorMessage = createErrorMessage();
-        if (isContainerExist) {
-            isContainerExist.remove();
-        }
 
         dom.root.append(errorMessage);
-        data.id = null;
+
         return;
     }
 
-    // check if the same pokemon
-    if (pokemonId === data.id) {
+    let pokemonIds = [];
+    const splittedValue = inputValue.split(',');
+    splittedValue.forEach((item) => {
+        item = item.trim();
+        const itemNumber = Number(item);
+        if (itemNumber > 0 && itemNumber < 1011 && !Number.isNaN(itemNumber)) {
+            pokemonIds.push(item);
+        }
+    });
+
+    if (pokemonIds.length === 0) {
+        const errorMessage = createErrorMessage();
+
+        dom.root.append(errorMessage);
+
         return;
     }
 
-    const pokemonData = await getPokemon(pokemonId);
+    const pokemonsPromises = pokemonIds.map((id) => getPokemon(id));
+    const pokemonsData = await Promise.all(pokemonsPromises);
 
-    if (!isContainerExist) {
-        // create pokemon DOM
-        dom.root.innerHTML = '';
-        const pokemonDom = createPokemon(pokemonData);
+    // create pokemons DOM
+    pokemonsData.forEach((data) => {
+        const pokemonDom = createPokemon(data);
         dom.root.append(pokemonDom);
-    } else {
-        // update pokemon DOM
-        const name = isContainerExist.getElementById('name');
-        name.innerText = pokemonData.species.name;
-        const image = isContainerExist.getElementById('img');
-        image.src = pokemonData.sprites.front_default;
-        const oldAbilities = isContainerExist.getElementById('list');
-        const newAbilities = createAbilities(pokemonData.abilities);
-        oldAbilities.replaceWith(newAbilities);
-    }
-
-    data.id = pokemonId;
+    });
 };
 
 export default buttonHandler;
